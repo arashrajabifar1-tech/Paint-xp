@@ -2,11 +2,11 @@
 <html lang="en"><head><meta charset="UTF-8">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#0831d9">
-<meta name="description" content="A Windows XP-inspired drawing app by Tizandish Studio.">
+<meta name="description" content="XP Paint — classic Windows XP-style drawing app by Tizandish Studio.">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./assets/paint-xp.svg">
 <link rel="apple-touch-icon" href="./assets/paint-xp.svg"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Tizandish Paint XP</title>
+<title>XP Paint</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#0831d9}
 *{box-sizing:border-box;margin:0;padding:0;font:11px Tahoma,"MS Sans Serif",Arial,sans-serif;-webkit-user-select:none;user-select:none}
@@ -476,7 +476,18 @@ const q=p+46+N;v.setUint32(q,0x06054b50,true);v.setUint16(q+8,1,true);v.setUint1
 function legacySave(b,nm,type){const u=URL.createObjectURL(b),dl=()=>{const a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove()},file=new File([b],nm,{type}),pv_=/png|jpeg|gif/.test(type);
 try{dl()}catch(_){}
 dlg('Save Picture',`<div><b>${nm.replace(/[<>&]/g,'')}</b></div>${pv_?`<img src="${u}" style="max-width:100%;max-height:38vh;border:1px solid #808080;-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default">`:''}<div>Downloads are blocked here. Press and hold the picture and choose Save / Download image, or use Share or Copy.</div>`,[['Download',()=>{try{dl()}catch(_){}return false}],['Share...',()=>{if(navigator.canShare&&navigator.canShare({files:[file]}))navigator.share({files:[file]}).catch(()=>{});return false}],['Copy',()=>{try{navigator.clipboard.write([new ClipboardItem({[b.type||'image/png']:b})]).then(()=>stat('Copied to the clipboard.'),()=>stat('Copy is not allowed here.'))}catch(_){stat('Copy is not allowed here.')}return false}],['Close',()=>{setTimeout(()=>URL.revokeObjectURL(u),6e4)}]])}
-async function deliver(b,nm,type){let D=null;try{D=window.claude&&await window.claude.use('downloads')}catch(_){}
+async function saveToAndroidGallery(b,nm,type){
+const reader=new FileReader();
+const data=await new Promise((resolve,reject)=>{reader.onload=()=>{const v=String(reader.result||''),i=v.indexOf(',');if(i<0)reject(new Error('Could not encode image'));else resolve(v.slice(i+1))};reader.onerror=()=>reject(reader.error||new Error('Could not read image'));reader.readAsDataURL(b)});
+const saved=await window.Capacitor.Plugins.ImageSaver.save({data,fileName:nm,mimeType:(type&&type.indexOf('image/')===0?type:(b.type||'image/png'))});
+stat('Saved to Pictures/XP Paint: '+(saved&&saved.fileName||nm));setTimeout(()=>stat(),4000);
+}
+async function deliver(b,nm,type){
+const cap=window.Capacitor;
+if(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.ImageSaver){
+try{await saveToAndroidGallery(b,nm,type);return}catch(e){msg('Save Failed','Could not save the image to Pictures/XP Paint. '+String(e&&e.message||e),[['OK']]);return}
+}
+let D=null;try{D=window.claude&&await window.claude.use('downloads')}catch(_){}
 if(D){try{let f=nm,d=b;if(/\.(bmp|tiff?)$/i.test(nm)){d=await zipOne(nm,b);f=nm.replace(/\.\w+$/,'')+'.zip'}await D.save({filename:f,data:d});stat('Saved: '+f);setTimeout(()=>stat(),3000);return}catch(e){const c=e&&e.code;if(c=='declined')return;if(c=='rate_limited'){stat('Save failed — storage unavailable');setTimeout(()=>stat(),5000);return}}}
 legacySave(b,nm,type)}
 function saveFile(nm,type){commit();const f=b=>deliver(b,nm,type);if(type=='image/tiff')f(tiff());else if(type=='image/bmp'||type=='bmp256'||type=='bmp16'||type=='bmp1'){const depth=type=='bmp1'?1:type=='bmp16'?4:type=='bmp256'?8:24;f(bmpDepth(depth))}else if(type=='image/gif')f(gif());else cv.toBlob(f,type,.95);dirty=false;name=nm;title();addRecent(nm)}
@@ -494,7 +505,14 @@ const stretch=(sx,sy,kx,ky)=>xform(s=>{const W=Math.max(1,s.width*sx/100),H=Math
 // actions
 const A={
 new(){guard(()=>{newImg(512,384);name='untitled';title()})},open(){guard(()=>{pasteMode=false;$('#fi').click()})},save(){doSave()},saveas:saveAs,print(){commit();applyPS();window.print()},
-exit(){guard(()=>msg('Paint','You can close this browser tab to exit Paint.',[['OK',()=>{try{window.close()}catch(e){}}]]))},
+exit(){guard(()=>{
+const cap=window.Capacitor,plugin=cap&&cap.Plugins&&cap.Plugins.AppControl;
+if(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform()&&plugin&&typeof plugin.exit==='function'){
+plugin.exit().catch(e=>msg('Exit failed','Android could not close XP Paint. '+String(e&&e.message||e),[['OK']]));
+return;
+}
+msg('Paint','You can close this browser tab to exit Paint.',[['OK',()=>{try{window.close()}catch(e){}}]]);
+})},
 undo,redo,cut(){doCopy();delSel()},copy:doCopy,paste:doPaste,delsel:delSel,selall(){commit();setTool('select');sel={x:0,y:0,w:cv.width,h:cv.height,lifted:false};sz();pv()},
 copyto(){const c=selImg()||cp(cv);c.toBlob(b=>deliver(b,'selection.png','image/png'))},pastefrom(){pasteMode=true;$('#fi').click()},
 toolbox(){showTB=!showTB;document.body.classList.toggle('nt',!showTB)},colorbox(){showCB=!showCB;document.body.classList.toggle('nc',!showCB)},statusbar(){showSB=!showSB;document.body.classList.toggle('ns',!showSB)},textbar(){showFB=!showFB;$('#fb').style.display=showFB||tool=='text'?'flex':'none'},
@@ -509,7 +527,7 @@ help(){msg('Paint Help','<b>Drawing</b><br>Left button draws with the foreground
 printprev(){commit();dlg('Print Preview',`<div style="max-height:60vh;overflow:auto;background:#808080;padding:8px"><img src="${cv.toDataURL()}" style="background:#fff;max-width:100%"></div>`,[['Print',()=>{setTimeout(()=>A.print(),50)}],['Close']])},
 pagesetup(){dlg('Page Setup',`<label>Orientation:<select name="o"><option ${PS.o=='portrait'?'selected':''}>portrait</option><option ${PS.o=='landscape'?'selected':''}>landscape</option></select></label><label>Scale %:<input type="number" name="s" min="10" max="400" value="${PS.sc}"></label>`,[['OK',d=>{PS.o=V(d,'o').value;PS.sc=+V(d,'s').value||100}],['Cancel']])},
 send(){commit();cv.toBlob(async b=>{const f=new File([b],name.replace(/\.\w+$/,'')+'.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:name})}catch(_){}}else saveFile(name.replace(/\.\w+$/,'')+'.png','image/png')})},
-about(){msg('About Paint','<b>Paint</b><br>Version 0.10 — Windows XP style (classic icon, 2-col toolbox, shape select/move, layers, AA, Open-append, draggable Fonts bar, real fonts, solid fill for thin closed shapes)<br>Single-file HTML app. All drawing stays on your device.')},
+about(){msg('About Paint','<b>Paint</b><br>Version 0.10.1 — XP Paint, Windows XP style (classic icon, 2-col toolbox, shape select/move, layers, AA, Open-append, draggable Fonts bar, real fonts, solid fill for thin closed shapes)<br>Single-file HTML app. All drawing stays on your device.')},
 wpcenter(){setWallpaper('center')},wptile(){setWallpaper('tile')},
 rtl(){const h=document.documentElement;if(h.dir==='rtl'){h.dir='ltr';document.body.classList.remove('rtl')}else{h.dir='rtl';document.body.classList.add('rtl')}}};
 // menu bar
