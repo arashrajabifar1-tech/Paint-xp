@@ -1,7 +1,7 @@
 import { readFile, access } from 'node:fs/promises';
 import vm from 'node:vm';
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-const blocks = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map(m => m[1]).filter(s => s.trim());
+const blocks = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m => m[1]).filter(s => s.trim());
 if (!blocks.length) throw new Error('No inline application script found');
 blocks.forEach((code, i) => new vm.Script(code, { filename: 'inline-script-' + (i + 1) }));
 for (const marker of ['id="cv"', 'id="tools"', 'id="pg"', 'id="fi"']) if (!html.includes(marker)) throw new Error('Missing app element: ' + marker);
