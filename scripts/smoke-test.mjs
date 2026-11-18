@@ -10,10 +10,10 @@ blocks.forEach((code, i) => new vm.Script(code, { filename: 'inline-script-' + (
 for (const marker of ['id="cv"', 'id="tools"', 'id="pg"', 'id="fi"']) {
   if (!html.includes(marker)) throw new Error('Missing app element: ' + marker);
 }
-if (!html.includes('window.Capacitor.Plugins.ImageSaver.save')) throw new Error('Native image-save bridge is not wired');
-if (!html.includes('cap.Plugins.AppControl')) throw new Error('Native app-exit bridge is not wired');
+if (!html.includes("cap.registerPlugin('ImageSaver')")) throw new Error('Capacitor ImageSaver plugin is not registered in JavaScript');
+if (!html.includes("cap.registerPlugin('AppControl')")) throw new Error('Capacitor AppControl plugin is not registered in JavaScript');
 if (!html.includes('saveToAndroidGallery')) throw new Error('Native image-save handler is missing');
-if (!html.includes("Pictures/XP Paint")) throw new Error('Save success path is not exposed to the user');
+if (!html.includes('Pictures/XP Paint')) throw new Error('Save success path is not exposed to the user');
 
 const manifest = JSON.parse(await read('../manifest.webmanifest'));
 if (manifest.name !== 'XP Paint' || manifest.short_name !== 'XP Paint' || !manifest.icons?.length) {
@@ -47,6 +47,7 @@ for (const file of ['../assets/paint-xp.svg', '../capacitor.config.json', '../.g
 }
 console.log('PASS: Paint application JavaScript parses (' + blocks.length + ' inline block(s))');
 console.log('PASS: XP Paint browser, PWA and Capacitor app labels match');
+console.log('PASS: Capacitor registerPlugin API connects JavaScript to native ImageSaver and AppControl');
 console.log('PASS: image export uses Android MediaStore in Pictures/XP Paint');
 console.log('PASS: exit command uses Android finishAndRemoveTask');
 console.log('PASS: custom plugins and adaptive launcher icon are installed by the Android build script');

@@ -476,16 +476,17 @@ const q=p+46+N;v.setUint32(q,0x06054b50,true);v.setUint16(q+8,1,true);v.setUint1
 function legacySave(b,nm,type){const u=URL.createObjectURL(b),dl=()=>{const a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove()},file=new File([b],nm,{type}),pv_=/png|jpeg|gif/.test(type);
 try{dl()}catch(_){}
 dlg('Save Picture',`<div><b>${nm.replace(/[<>&]/g,'')}</b></div>${pv_?`<img src="${u}" style="max-width:100%;max-height:38vh;border:1px solid #808080;-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default">`:''}<div>Downloads are blocked here. Press and hold the picture and choose Save / Download image, or use Share or Copy.</div>`,[['Download',()=>{try{dl()}catch(_){}return false}],['Share...',()=>{if(navigator.canShare&&navigator.canShare({files:[file]}))navigator.share({files:[file]}).catch(()=>{});return false}],['Copy',()=>{try{navigator.clipboard.write([new ClipboardItem({[b.type||'image/png']:b})]).then(()=>stat('Copied to the clipboard.'),()=>stat('Copy is not allowed here.'))}catch(_){stat('Copy is not allowed here.')}return false}],['Close',()=>{setTimeout(()=>URL.revokeObjectURL(u),6e4)}]])}
-async function saveToAndroidGallery(b,nm,type){
+async function saveToAndroidGallery(b,nm,type,plugin){
 const reader=new FileReader();
 const data=await new Promise((resolve,reject)=>{reader.onload=()=>{const v=String(reader.result||''),i=v.indexOf(',');if(i<0)reject(new Error('Could not encode image'));else resolve(v.slice(i+1))};reader.onerror=()=>reject(reader.error||new Error('Could not read image'));reader.readAsDataURL(b)});
-const saved=await window.Capacitor.Plugins.ImageSaver.save({data,fileName:nm,mimeType:(type&&type.indexOf('image/')===0?type:(b.type||'image/png'))});
+const saved=await plugin.save({data,fileName:nm,mimeType:(type&&type.indexOf('image/')===0?type:(b.type||'image/png'))});
 stat('Saved to Pictures/XP Paint: '+(saved&&saved.fileName||nm));setTimeout(()=>stat(),4000);
 }
 async function deliver(b,nm,type){
 const cap=window.Capacitor;
-if(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.ImageSaver){
-try{await saveToAndroidGallery(b,nm,type);return}catch(e){msg('Save Failed','Could not save the image to Pictures/XP Paint. '+String(e&&e.message||e),[['OK']]);return}
+const imageSaver=cap&&typeof cap.registerPlugin==='function'?cap.registerPlugin('ImageSaver'):null;
+if(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform()&&imageSaver){
+try{await saveToAndroidGallery(b,nm,type,imageSaver);return}catch(e){msg('Save Failed','Could not save the image to Pictures/XP Paint. '+String(e&&e.message||e),[['OK']]);return}
 }
 let D=null;try{D=window.claude&&await window.claude.use('downloads')}catch(_){}
 if(D){try{let f=nm,d=b;if(/\.(bmp|tiff?)$/i.test(nm)){d=await zipOne(nm,b);f=nm.replace(/\.\w+$/,'')+'.zip'}await D.save({filename:f,data:d});stat('Saved: '+f);setTimeout(()=>stat(),3000);return}catch(e){const c=e&&e.code;if(c=='declined')return;if(c=='rate_limited'){stat('Save failed — storage unavailable');setTimeout(()=>stat(),5000);return}}}
@@ -506,7 +507,7 @@ const stretch=(sx,sy,kx,ky)=>xform(s=>{const W=Math.max(1,s.width*sx/100),H=Math
 const A={
 new(){guard(()=>{newImg(512,384);name='untitled';title()})},open(){guard(()=>{pasteMode=false;$('#fi').click()})},save(){doSave()},saveas:saveAs,print(){commit();applyPS();window.print()},
 exit(){guard(()=>{
-const cap=window.Capacitor,plugin=cap&&cap.Plugins&&cap.Plugins.AppControl;
+const cap=window.Capacitor,plugin=cap&&typeof cap.registerPlugin==='function'?cap.registerPlugin('AppControl'):null;
 if(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform()&&plugin&&typeof plugin.exit==='function'){
 plugin.exit().catch(e=>msg('Exit failed','Android could not close XP Paint. '+String(e&&e.message||e),[['OK']]));
 return;
