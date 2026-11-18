@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Tizandish Paint XP",
+  "short_name": "Paint XP",
+  "description": "Windows XP-inspired drawing app by Tizandish Studio.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0831d9",
+  "theme_color": "#0831d9",
+  "icons": [
+    {
+      "src": "./assets/paint-xp.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

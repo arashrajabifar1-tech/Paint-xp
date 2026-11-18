@@ -1,0 +1,6 @@
+{
+  "appId": "com.tizandish.paintxp",
+  "appName": "Tizandish Paint XP",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

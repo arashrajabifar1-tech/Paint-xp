@@ -1,0 +1,15 @@
+import { readFile, access } from 'node:fs/promises';
+import vm from 'node:vm';
+const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const blocks = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map(m => m[1]).filter(s => s.trim());
+if (!blocks.length) throw new Error('No inline application script found');
+blocks.forEach((code, i) => new vm.Script(code, { filename: 'inline-script-' + (i + 1) }));
+for (const marker of ['id="cv"', 'id="tools"', 'id="pg"', 'id="fi"']) if (!html.includes(marker)) throw new Error('Missing app element: ' + marker);
+const manifest = JSON.parse(await readFile(new URL('../manifest.webmanifest', import.meta.url), 'utf8'));
+if (manifest.name !== 'Tizandish Paint XP' || !manifest.icons?.length) throw new Error('PWA manifest invalid');
+new vm.Script(await readFile(new URL('../sw.js', import.meta.url), 'utf8'), { filename: 'sw.js' });
+for (const file of ['../assets/paint-xp.svg', '../capacitor.config.json', '../.github/workflows/android-apk.yml']) await access(new URL(file, import.meta.url));
+console.log('PASS: inline application JavaScript parses (' + blocks.length + ' block(s))');
+console.log('PASS: core Paint UI markers found');
+console.log('PASS: PWA manifest and service worker are valid');
+console.log('PASS: Capacitor config, icon and Android workflow are present');

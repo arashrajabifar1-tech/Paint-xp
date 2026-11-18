@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#2da7ff"/><stop offset="1" stop-color="#0634b8"/></linearGradient><linearGradient id="paint" x2="0" y2="1"><stop stop-color="#fff6d6"/><stop offset="1" stop-color="#d7b878"/></linearGradient></defs>
+<rect x="12" y="12" width="488" height="488" rx="92" fill="url(#bg)" stroke="#fff" stroke-width="10"/>
+<path d="M103 290C103 174 189 94 286 94c87 0 141 50 141 123 0 54-32 82-77 82h-29c-17 0-24 12-17 28 12 29-7 62-46 62-89 0-155-37-155-99z" fill="url(#paint)" stroke="#573b24" stroke-width="12"/>
+<g stroke="#30241d" stroke-width="7"><circle cx="184" cy="240" r="24" fill="#e33"/><circle cx="251" cy="203" r="24" fill="#3a5"/><circle cx="319" cy="222" r="24" fill="#39c"/><circle cx="365" cy="272" r="21" fill="#f93"/><circle cx="228" cy="294" r="21" fill="#b4e"/></g>
+<path d="M90 90l42 125 17-7 32-31z" fill="#f4d09a" stroke="#392819" stroke-width="9"/><path d="M90 90l12 37 32-12z" fill="#d33"/>
+<text x="256" y="455" text-anchor="middle" font-family="Arial,sans-serif" font-size="46" font-weight="bold" fill="#fff">PAINT XP</text></svg>

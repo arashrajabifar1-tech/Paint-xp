@@ -1,0 +1,19 @@
+{
+  "name": "tizandish-paint-xp",
+  "version": "0.10.0",
+  "private": true,
+  "description": "Windows XP-inspired offline drawing app by Tizandish Studio",
+  "scripts": {
+    "build:web": "node scripts/prepare-web.mjs",
+    "test": "node scripts/smoke-test.mjs",
+    "android:prepare": "npm run build:web && npx cap add android && npx cap sync android",
+    "android:sync": "npm run build:web && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}
