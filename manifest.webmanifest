@@ -14,7 +14,7 @@
       "src": "./assets/paint-xp.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

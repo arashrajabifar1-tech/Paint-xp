@@ -9,8 +9,8 @@ A classic Windows XP-style drawing application by Tizandish Studio.
 - Import and export common image formats from the browser
 - Browser autosave and installable offline PWA
 - Android app label and launcher icon: **XP Paint**
-- Android image saving to the public `Pictures/XP Paint` gallery folder
-- Android native Exit command that closes the app task
+- Android PNG/JPEG/GIF/WebP saving to `Pictures/XP Paint`; BMP/TIFF to `Downloads/XP Paint`
+- Android native Exit command that waits for any requested save to finish before closing
 
 ## Run locally
 Open `index.html` in a modern browser. For PWA and service-worker testing, serve the project from localhost or HTTPS.

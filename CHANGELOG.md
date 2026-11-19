@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.2
+- Fixed Android export MIME type routing and public storage destinations.
+- Save and Save As now await native file writing before marking the drawing clean.
+- Save-before-exit now waits for successful save completion; cancel/failure prevents exiting.
+- Non-gallery formats (BMP/TIFF) are stored under Downloads/XP Paint; PNG/JPEG/GIF/WebP under Pictures/XP Paint.
+- Rebuilt the launcher icon from the supplied Paint cup image with a transparent background.
+
 ## 0.10.1
 - Renamed the app and launcher label to XP Paint.
 - Replaced the app icon with a classic cup of colored pencils and brushes.

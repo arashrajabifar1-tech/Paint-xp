@@ -1,4 +1,4 @@
-const CACHE = 'xp-paint-v0.10.1';
+const CACHE = 'xp-paint-v0.10.2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './assets/paint-xp.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));

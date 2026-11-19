@@ -23,51 +23,49 @@ public class ImageSaverPlugin extends Plugin {
     public void save(PluginCall call) {
         String encoded = call.getString("data");
         String requestedName = call.getString("fileName");
-        String mimeType = call.getString("mimeType");
-
+        String requestedMime = call.getString("mimeType");
         if (encoded == null || encoded.isEmpty()) {
-            call.reject("Image data is missing");
-            return;
-        }
-        if (mimeType == null || !mimeType.toLowerCase(Locale.ROOT).startsWith("image/")) {
-            call.reject("A valid image MIME type is required");
+            call.reject("Image/file data is missing");
             return;
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            call.reject("Direct gallery saving requires Android 10 or later");
+            call.reject("Public file saving requires Android 10 or later");
             return;
         }
 
         String safeName = requestedName == null ? "XP-Paint.png" : requestedName;
-        safeName = safeName.replace("/", "_").replace("\\", "_")
-                .replace(":", "_").replace("*", "_").replace("?", "_")
-                .replace("\"", "_").replace("<", "_").replace(">", "_")
-                .replace("|", "_").trim();
+        safeName = safeName.replace("/", "_").replace("\\", "_").replace(":", "_")
+                .replace("*", "_").replace("?", "_").replace("\"", "_")
+                .replace("<", "_").replace(">", "_").replace("|", "_").trim();
         if (safeName.isEmpty()) safeName = "XP-Paint.png";
 
+        String ext = safeName.contains(".") ? safeName.substring(safeName.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT) : "png";
+        String mime = mimeFor(ext, requestedMime);
+        boolean gallery = "png".equals(ext) || "jpg".equals(ext) || "jpeg".equals(ext)
+                || "gif".equals(ext) || "webp".equals(ext);
+        String folder = gallery ? Environment.DIRECTORY_PICTURES + "/XP Paint"
+                : Environment.DIRECTORY_DOWNLOADS + "/XP Paint";
         Uri savedUri = null;
         try {
             byte[] bytes = Base64.decode(encoded, Base64.DEFAULT);
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, safeName);
-            values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
-            values.put(MediaStore.MediaColumns.RELATIVE_PATH,
-                    Environment.DIRECTORY_PICTURES + "/XP Paint");
+            values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, folder);
             values.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
             ContentResolver resolver = getContext().getContentResolver();
-            savedUri = resolver.insert(
-                    MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
-                    values
-            );
-            if (savedUri == null) throw new IllegalStateException("Android did not create an image entry");
+            Uri collection = gallery
+                    ? MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                    : MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+            savedUri = resolver.insert(collection, values);
+            if (savedUri == null) throw new IllegalStateException("Android did not create the file entry");
 
             try (OutputStream output = resolver.openOutputStream(savedUri, "w")) {
-                if (output == null) throw new IllegalStateException("Could not open the saved image");
+                if (output == null) throw new IllegalStateException("Could not open destination stream");
                 output.write(bytes);
                 output.flush();
             }
-
             ContentValues publish = new ContentValues();
             publish.put(MediaStore.MediaColumns.IS_PENDING, 0);
             resolver.update(savedUri, publish, null, null);
@@ -75,14 +73,30 @@ public class ImageSaverPlugin extends Plugin {
             JSObject result = new JSObject();
             result.put("uri", savedUri.toString());
             result.put("fileName", safeName);
-            result.put("folder", "Pictures/XP Paint");
+            result.put("folder", folder);
+            result.put("mimeType", mime);
             call.resolve(result);
         } catch (Exception error) {
             if (savedUri != null) {
                 try { getContext().getContentResolver().delete(savedUri, null, null); }
                 catch (Exception ignored) { }
             }
-            call.reject("Could not save image: " + error.getMessage());
+            call.reject("Save failed: " + error.getMessage());
+        }
+    }
+
+    private String mimeFor(String ext, String requested) {
+        switch (ext) {
+            case "png": return "image/png";
+            case "jpg":
+            case "jpeg": return "image/jpeg";
+            case "gif": return "image/gif";
+            case "webp": return "image/webp";
+            case "bmp": return "image/bmp";
+            case "tif":
+            case "tiff": return "image/tiff";
+            default: return requested != null && !requested.isEmpty()
+                    ? requested : "application/octet-stream";
         }
     }
 }
