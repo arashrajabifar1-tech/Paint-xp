@@ -16,7 +16,7 @@ if (!html.includes('async function saveFile') || !html.includes('await deliver(b
 if (!html.includes("return name==='untitled'?saveAs():saveFile")) throw new Error('Save operation does not return completion status');
 if (!html.includes('async d=>{const saved=await doSave()')) throw new Error('Save-before-exit does not await save completion');
 if (!html.includes('await next()')) throw new Error('Exit is not gated on successful save');
-if (!html.includes('canvas could not encode')) throw new Error('Canvas export failure is not handled');
+if (!html.toLowerCase().includes('canvas could not encode')) throw new Error('Canvas export failure is not handled');
 if (!html.includes('Save Failed') && !html.includes('Operation Failed')) throw new Error('Save failure feedback is missing');
 
 const manifest = JSON.parse(await read('../manifest.webmanifest'));
